@@ -97,13 +97,11 @@ class CustomFieldsController < ApplicationController
   end
 
   def careful_new_custom_field(type, params = {})
-    cf = begin
+    cf =
       if type.to_s.match(/.+CustomField\z/)
         klass = type.to_s.constantize
         klass.new(params) if klass.ancestors.include? CustomField
       end
-    rescue
-    end
     redirect_to custom_fields_path unless cf
     cf
   end

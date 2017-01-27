@@ -1,0 +1,7 @@
+<div ng-repeat="value in $ctrl.field.value">
+  <span title="{{ value }}">{{ value }}</span>
+</div>
+
+<span title="no value" ng-if="$ctrl.field.value.length == 0">
+  -
+</span>

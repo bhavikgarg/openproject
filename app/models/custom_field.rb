@@ -31,8 +31,10 @@ class CustomField < ActiveRecord::Base
   include CustomField::OrderStatements
 
   has_many :custom_values, dependent: :delete_all
+  has_many :custom_options, -> { order(position: :asc) }, dependent: :delete_all
+
   acts_as_list scope: 'type = \'#{self.class}\''
-  translates :name, :default_value, :possible_values
+  translates :name
 
   accepts_nested_attributes_for :translations,
                                 allow_destroy: true,
@@ -69,18 +71,11 @@ class CustomField < ActiveRecord::Base
 
   validates_inclusion_of :field_format, in: Redmine::CustomFieldFormat.available_formats
 
-  validate :validate_presence_of_possible_values
-
   validate :validate_default_value_in_translations
 
   validates :min_length, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :max_length, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :min_length, numericality: { less_than_or_equal_to: :max_length, message: :smaller_than_or_equal_to_max_length }, unless: Proc.new { |cf| cf.max_length.blank? }
-
-  def initialize(attributes = nil)
-    super
-    self.possible_values ||= []
-  end
 
   before_validation :check_searchability
 
@@ -88,13 +83,6 @@ class CustomField < ActiveRecord::Base
   def check_searchability
     self.searchable = false if %w(int float date bool).include?(field_format)
     true
-  end
-
-  def validate_presence_of_possible_values
-    if field_format == 'list'
-      errors.add(:possible_values, :blank) if self.possible_values.blank?
-      errors.add(:possible_values, :invalid) unless self.possible_values.is_a? Array
-    end
   end
 
   # validate default value in every translation available
@@ -154,6 +142,8 @@ class CustomField < ActiveRecord::Base
     case field_format
     when 'user', 'version'
       possible_values_options(obj).map(&:last)
+    when 'list'
+      custom_options.order(position: :asc).map(&:value).join("\n")
     else
       options = obj.nil? ? {} : obj
       read_attribute(:possible_values, options)
@@ -162,13 +152,25 @@ class CustomField < ActiveRecord::Base
 
   # Makes possible_values accept a multiline string
   def possible_values=(arg)
-    if arg.is_a?(Array)
-      value = arg.compact.map(&:strip).select { |v| !v.blank? }
+    values =
+      if arg.is_a?(Array)
+        arg.compact.map(&:strip).select { |v| !v.blank? }
+      else
+        arg.to_s.split(/[\n\r]+/)
+      end
 
-      write_attribute(:possible_values, value, {})
-    else
-      self.possible_values = arg.to_s.split(/[\n\r]+/)
+    max_position = custom_options.size
+    values.zip(custom_options).each_with_index do |(value, custom_option), i|
+      if custom_option
+        custom_option.value = value
+      else
+        custom_options.build position: i + 1, value: value
+      end
+
+      max_position = i + 1
     end
+
+    custom_options.where("position > ?", max_position).destroy_all
   end
 
   def cast_value(value)
@@ -228,6 +230,10 @@ class CustomField < ActiveRecord::Base
     attribute_locale :default_value, default_value
   end
 
+  def multi_value?
+    multi_value
+  end
+
   private
 
   def attribute_locale(attribute, value)
@@ -242,22 +248,5 @@ class CustomField < ActiveRecord::Base
     value_keys = attributes.reject { |_k, v| v.blank? }.keys.map(&:to_sym)
 
     !value_keys.include?(:locale) || (value_keys & translated_attribute_names).size == 0
-  end
-end
-
-# for the sake of nested attributes it is necessary to redefine possible_values
-# the values get set directly on the translations association
-
-class CustomField::Translation < Globalize::ActiveRecord::Translation
-  serialize :possible_values
-
-  def possible_values=(arg)
-    if arg.is_a?(Array)
-      value = arg.compact.map(&:strip).select { |v| !v.blank? }
-
-      write_attribute(:possible_values, value)
-    else
-      self.possible_values = arg.to_s.split(/[\n\r]+/)
-    end
   end
 end

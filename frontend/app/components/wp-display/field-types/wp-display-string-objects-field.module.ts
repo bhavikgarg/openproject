@@ -28,16 +28,23 @@
 
 import {DisplayField} from "../wp-display-field/wp-display-field.module";
 
-export class StringObjectDisplayField extends DisplayField {
-
-  isManualRenderer = true;
+export class StringObjectsDisplayField extends DisplayField {
+  public template: string = '/components/wp-display/field-types/wp-display-string-objects-field.directive.html';
 
   public get value() {
-    console.log("getting string object value: " + JSON.stringify(this.resource[this.name]));
-    if(this.schema) {
-      return this.resource[this.name] && (this.resource[this.name].value || this.resource[this.name].name);
-    }
-    else {
+    if (this.schema) {
+      var cf = this.resource[this.name];
+
+      if (cf.elements) {
+        return cf.elements.map(e => e.name);
+      } else if (cf.map) {
+        return cf.map(e => e.name);
+      } else if (cf.name) {
+        return [cf.name];
+      } else {
+        return ["error: " + JSON.stringify(cf)];
+      }
+    } else {
       return null;
     }
   }

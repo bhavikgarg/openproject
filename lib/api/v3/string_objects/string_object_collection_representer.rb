@@ -1,13 +1,13 @@
 #-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2017 Jean-Philippe Lang
+# Copyright (C) 2006-2013 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -27,22 +27,24 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-require 'api/v3/string_objects/string_object_representer'
-
 module API
   module V3
     module StringObjects
-      class StringObjectsAPI < ::API::OpenProjectAPI
-        resources :string_objects do
-          params do
-            requires :value, type: String
-            optional :name, type: String
-          end
-
-          get do
-            StringObjectRepresenter.new([params[:name], params[:value]].compact)
-          end
+      class StringObjectCollectionRepresenter < ::API::Decorators::UnpaginatedCollection
+        def _type
+          "[]StringObject"
         end
+
+        element_decorator ::API::V3::StringObjects::StringObjectRepresenter
+
+        collection :elements,
+                   getter: -> (*) {
+                     represented.map do |model|
+                       element_decorator.new(model, current_user: current_user)
+                     end
+                   },
+                   exec_context: :decorator,
+                   embedded: true
       end
     end
   end
