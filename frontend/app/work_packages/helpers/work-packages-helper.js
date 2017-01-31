@@ -34,8 +34,15 @@ module.exports = function(TimezoneService, currencyFilter, CustomFieldHelper) {
 
       switch(typeof(content)) {
         case 'object':
-          if (content === null) { return ''; }
-          return content.name || content.subject || content.title || content.value || '';
+          if (content === null) {
+            return '';
+          } else if (content instanceof Array) {
+            return content
+              .map(c => c.name || c.subject || c.title || c.value || '')
+              .join(", ");
+          } else {
+            return content.name || content.subject || content.title || content.value || '';
+          }
         case 'number':
           return content;
         default:

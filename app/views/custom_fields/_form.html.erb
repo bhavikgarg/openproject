@@ -63,10 +63,13 @@ See doc/COPYRIGHT.rdoc for more details.
     </span>
   </div>
 
+  <div class="form--field" id="custom_field_multi_select">
+    <%= f.check_box :multi_value %>
+  </div>
+
   <div class="form--field" id="custom_field_possible_values_attributes">
     <% if @custom_field.new_record? || @custom_field.field_format == 'list' %>
       <% possible_values = @custom_field.custom_options.map(&:value).join("\n") %>
-      <%= f.check_box :multi_value %>
       <%= f.text_area :possible_values,
                       value: possible_values,
                       rows: 15

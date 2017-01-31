@@ -30,9 +30,9 @@
 class CustomValue::ListStrategy < CustomValue::FormatStrategy
   def typed_value
     unless value.blank?
-      option = CustomOption.where(id: value.to_s).limit(1).map(&:value).first
+      @option ||= CustomOption.where(id: value.to_s).limit(1).map(&:value).first
 
-      option || ("#{value} not found")
+      @option || ("#{value} not found")
     end
   end
 
