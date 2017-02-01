@@ -33,7 +33,6 @@ export class StringObjectDisplayField extends DisplayField {
   isManualRenderer = true;
 
   public get value() {
-    console.log("getting string object value: " + JSON.stringify(this.resource[this.name]));
     if(this.schema) {
       return this.resource[this.name] && (this.resource[this.name].value || this.resource[this.name].name);
     }

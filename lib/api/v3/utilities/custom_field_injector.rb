@@ -276,13 +276,12 @@ module API
             # object (that behaviour is only required for form payloads)
             values = Array(represented.custom_value_for(custom_field)).map do |custom_value|
               if custom_value && custom_value.value.present?
-                hash = { href: api_v3_paths.send(path_method, custom_value.value) }
-                hash[:title] = if custom_value.typed_value.respond_to?(:name)
-                                custom_value.typed_value.name
-                              else
-                                custom_value.typed_value
-                              end
-                hash
+                title = custom_value.typed_value.respond_to?(:name) ? custom_value.typed_value.name : custom_value.typed_value
+
+                {
+                  title: title,
+                  href: api_v3_paths.send(path_method, [title, custom_value.value]),
+                }
               else
                 { href: nil, title: nil }
               end
@@ -323,11 +322,7 @@ module API
 
             if value
               if custom_field.field_format == "list" && custom_field.multi_value?
-                API::V3::StringObjects::StringObjectCollectionRepresenter.new(
-                  value,
-                  "/api/v3/string_objects/foobar",
-                  current_user: current_user
-                )
+                nil # do not embed multi select values
               else
                 representer_class = REPRESENTER_MAP[custom_field.field_format]
 

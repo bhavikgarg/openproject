@@ -1,7 +1,7 @@
-<div ng-repeat="value in $ctrl.field.value">
-  <span title="{{ value }}">{{ value }}</span>
+<div ng-repeat="value in $ctrl.field.value" title="{{ value }}" class="custom-option">
+  {{ value }}
 </div>
 
-<span title="no value" ng-if="$ctrl.field.value.length == 0">
+<div title="no value" ng-if="$ctrl.field.value.length == 0" class="custom-option -empty">
   -
-</span>
+</divn>

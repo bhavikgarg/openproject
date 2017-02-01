@@ -61,6 +61,15 @@ class OpenProject::JournalFormatter::CustomField < ::JournalFormatter::Base
   end
 
   def find_list_value(custom_field, id)
-    custom_field.custom_options.find_by(id: id).try(:value)
+    if custom_field.multi_value?
+      values = custom_field.custom_options
+        .where(id: id.split(","))
+        .pluck(:value)
+        .select { |value| value.present? }
+
+      values.join(", ")
+    else
+      custom_field.custom_options.find_by(id: id).try(:value)
+    end
   end
 end

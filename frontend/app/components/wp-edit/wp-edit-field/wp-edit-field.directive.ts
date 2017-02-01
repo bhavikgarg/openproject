@@ -231,13 +231,8 @@ export class WorkPackageEditFieldController {
   }
 
   public handleUserSubmit() {
-    console.log("handleUserSubmit");
-
     if (this.inEditMode) {
-      console.log("update form");
       return this.formCtrl.updateForm();
-    } else {
-      console.log("form is up-to-date");
     }
 
     return this.submit();
