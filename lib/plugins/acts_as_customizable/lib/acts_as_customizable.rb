@@ -129,7 +129,7 @@ module Redmine
           values = custom_values.select { |v| v.custom_field_id == field_id }
 
           if values.size > 1
-            values
+            values.sort_by(&:id)
           else
             values.first
           end
